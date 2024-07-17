@@ -96,7 +96,7 @@
             <div class="flex space-x-4 h-12">
               {% if request.endpoint != None %}
               
-              <form class="rounded-md px-3 py-2 test-sm" action="/users">
+              <form class="rounded-md px-3 py-2 test-sm" action="/search">
                 <input name="q" class="form-control" placeholder="Search a movie" id="search">
                 <button class="btn btn-default">
                   <span class=""></span>
@@ -144,5 +144,10 @@
     {% endblock %}
   
   </div>
+  <footer class="bg-body-tertiary text-center text-lg-start fixed-bottom">
+    <div class="text-center p-3 bg-red-900">
+      <p class="ounded-md bg-indigo-950 px-3 py-3 text-sm/3 font-medium text-white">Streaming availabilty thanks to JustWatch</p>
+    </div>
+  </footer>
 </body>
 </html>

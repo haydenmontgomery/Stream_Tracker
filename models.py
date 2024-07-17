@@ -148,6 +148,12 @@ class Movie(db.Model):
         nullable=False
     )
 
+    image_url = db.Column(
+        db.Text,
+        default="Image URL",
+        nullable=False
+    )
+
     year = db.Column(
         db.Integer
     )

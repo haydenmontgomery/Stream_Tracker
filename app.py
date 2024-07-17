@@ -1,6 +1,9 @@
 import os
 
 import requests
+import aiohttp
+import asyncio
+from operator import itemgetter
 from flask import Flask, render_template, request, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
@@ -10,6 +13,11 @@ from models import db, connect_db, User, Movie, Subscription
 
 CURR_USER_KEY = "curr_user"
 OMDB_URL = "https://omdb-api4.p.rapidapi.com/"
+HEADERS = {
+                "accept": "application/json",
+                "Authorization": os.environ.get('TMDB_API_KEY')
+            }
+
 def create_app(database_name, testing=False):
 
     app = Flask(__name__)
@@ -18,6 +26,7 @@ def create_app(database_name, testing=False):
     # if not set there, use development local db.
     app.config['SQLALCHEMY_DATABASE_URI'] = (
         os.environ.get('DATABASE_URL', f'postgresql:///{database_name}'))
+    
 
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SQLALCHEMY_ECHO'] = False
@@ -211,20 +220,52 @@ def create_app(database_name, testing=False):
             flash("Access unauthorized.", "danger")
             return redirect("/")
         search = request.args.get('q')
-
+        
         if not search:
             return redirect('/')
         else:
-            querystring = {"s": search}
-            headers = {
-                "x-rapidapi-key": os.environ['RAPID_API_KEY'] ,
-	            "x-rapidapi-host": "omdb-api4.p.rapidapi.com",
-	            "Content-Type": "application/json"
-            }
-            response = requests.get(OMDB_URL, headers=headers, params=querystring)
+            url = f"https://api.themoviedb.org/3/search/movie?query={search}&include_adult=false&language=en-US&page=1"
+            search_response = requests.get(url, headers=HEADERS)
 
-        return render_template('movie_search.html', response=response)
+        """This section is making it easier for jinja to use.
+        Jsons the values, maps the results then sorts them by popularity so the most popular movie in the search is displayed first.
+        """
+        movie_array = []
+        movie_values = search_response.json().get('results')
+        movie_newlist = sorted(movie_values, key=itemgetter('popularity'), reverse=True)
+        """ for result in results:
+            print(result.get('id')) """
+        
+        updated_movies_list = asyncio.run(main_get(movie_newlist))
 
+        
+        return render_template('movie_search.html', results=updated_movies_list)
+
+    async def get_providers(session, movie):
+        movie_id = movie['id']
+        url = f"https://api.themoviedb.org/3/movie/{movie_id}/watch/providers"
+
+        async with session.get(url, headers=HEADERS) as response:
+            if response.status == 200:
+                result = await response.json()
+                another = result.get('results')
+                us = another.get('US')
+                if us == None:
+                    movie['flatrate'] = None
+                    return movie
+                flatrate = us.get('flatrate')
+                movie['flatrate'] = flatrate
+                return movie
+            else:
+                print(f"Failed to get data for movie ID {movie_id}: {response.status}")
+                movie['flatrate'] = flatrate
+                return movie
+        
+    async def main_get(movies):
+        async with aiohttp.ClientSession() as session:
+            tasks = [get_providers(session, movie) for movie in movies]
+            updated_movies = await asyncio.gather(*tasks)
+            return updated_movies
     ##############################################################################
     # Homepage and error pages
 
