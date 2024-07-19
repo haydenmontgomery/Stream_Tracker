@@ -5,9 +5,9 @@
     <div class="container">
         <div class="row row-cols-1">
             {% for result in results %}
-                
+                <div class="container">
                     <div class="clearfix">
-                        <img src="https://image.tmdb.org/t/p/original{{result.get('poster_path')}}" class="flex space-x-4 h-60 me-3 mb-3 float-md-start">
+                        <img src="https://image.tmdb.org/t/p/original{{result.get('poster_path')}}" class="flex space-x-4 h-60 me-3 mb-3 mt-3 float-md-start">
                         <p class="text-white text-center">{{result.get('title')}}</p>
 
                         <div class="progress" role="progressbar" aria-label="Basic example" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
@@ -21,7 +21,7 @@
                                         <div class="col d-flex space-x-4 h-12 me-3 mb-1">
                                             <img src="https://image.tmdb.org/t/p/original{{provider.get('logo_path')}}">                                            
                                         </div>
-                                        <p class="text-white ps-2">Subs</p>
+                                        <p class="text-white text-xs">Subs HD</p>
                                     </div>
                                     {% endfor %}
                                 {% else %}
@@ -30,9 +30,29 @@
                             </div>
                         </div>
                     </div>
-                
+                    {% if result.get('flatrate') != None %}
+                    <div class="ms-2">
+                        <form method="POST" action="/search">
+                            <input type="hidden" name="add_watchlist" value="{{result}}">
+                            <button class="btn btn-success" ">Add to watchlist</button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
                 <br>
             {% endfor %}
         </div>
     </div>   
+    
+    <div style="display: none;">
+        <input type="hidden" name="search_results" value="{{results}}" id="hidden_element">
+    </div>
+    
+    <script type="text/javascript">
+        $(function() {
+            $('form').submit(function() {
+                $("#hidden_element").clone().appendTo(this);
+            });
+        });
+    </script>
 {% endblock %}

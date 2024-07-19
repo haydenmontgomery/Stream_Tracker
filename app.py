@@ -3,13 +3,16 @@ import os
 import requests
 import aiohttp
 import asyncio
+import json
+import ast
 from operator import itemgetter
 from flask import Flask, render_template, request, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
 from forms import UserAddForm, LoginForm, UserEditForm
-from models import db, connect_db, User, Movie, Subscription
+from models import db, connect_db, User, Movie, Subscription, User_Likes_Movie, Service
+
 
 CURR_USER_KEY = "curr_user"
 OMDB_URL = "https://omdb-api4.p.rapidapi.com/"
@@ -17,6 +20,7 @@ HEADERS = {
                 "accept": "application/json",
                 "Authorization": os.environ.get('TMDB_API_KEY')
             }
+SUBSCRIPTIONS = ['Amazon Prime Video', 'Netflix', 'Disney Plus', 'HBO Max', 'Hulu', 'Peacock', 'Paramount Plus', 'Starz', 'Showtime', 'Apple TV']
 
 def create_app(database_name, testing=False):
 
@@ -183,10 +187,10 @@ def create_app(database_name, testing=False):
                 user.apple_tv = form.apple_tv.data
                 db.session.add(user)
                 db.session.commit()
-                flash(f'Changes updated', "info")
+                flash('Changes updated', "info")
                 return redirect('/')
             
-            flash(f'Invalid Credentials', "danger")
+            flash('Invalid Credentials', "danger")
             return redirect('/')
         return render_template('users/edit.html', form=form)
 
@@ -212,36 +216,67 @@ def create_app(database_name, testing=False):
     ##############################################################################
     # Movie routes?
 
-    @app.route('/search')
+    @app.route('/search', methods=['GET', 'POST'])
     def search_movies():
         """Search page. Takes arguments from searchbar, uses omdb api to get movies from search term."""
 
         if not g.user:
             flash("Access unauthorized.", "danger")
             return redirect("/")
-        search = request.args.get('q')
         
-        if not search:
-            return redirect('/')
-        else:
+        if request.method == 'POST':
+            """This is called when a user clicks to add a movie to watchlist"""
+
+            session['api_data'] = request.form.get('search_results') # gets the entire search results so we don't have to call api again.
+            dict_session = ast.literal_eval(session['api_data']) # converts to dictionary
+            movie_info_str = request.form.get('add_watchlist') # gets the selected movie
+            if movie_info_str:
+                try:
+                    dict_obj = ast.literal_eval(movie_info_str) # converts to dictionary
+                    movie = Movie.query.get_or_404(int(dict_obj.get('id')))
+                    if not movie:
+                        movie = Movie(movie_id=int(dict_obj.get('id')), name=dict_obj.get('title'), description=dict_obj.get('overview'), image=dict_obj.get('poster_path'), year=dict_obj.get('release_date'))
+                        db.session.add(movie)
+                        db.session.commit()
+                    likes = User_Likes_Movie(user_liking_id=g.user.id, like_movie_id=movie.id)
+                    db.session.add(likes)
+                    flash(f"Added to watchlist {dict_obj.get('title')}", "success")
+                    return render_template('movie_search.html', results=dict_session)
+                except ValueError as e:
+                    print("Error converting string to dictionary", e)
+           
+
+        if 'api_data' not in session or session['api_data'] == []:
+            """Make sure we query only if nothing is in our session just to be sure"""
+            search = request.args.get('q')
+
+            """             if not search:
+                return redirect('/')
+            else: """
             url = f"https://api.themoviedb.org/3/search/movie?query={search}&include_adult=false&language=en-US&page=1"
             search_response = requests.get(url, headers=HEADERS)
 
-        """This section is making it easier for jinja to use.
-        Jsons the values, maps the results then sorts them by popularity so the most popular movie in the search is displayed first.
-        """
-        movie_array = []
-        movie_values = search_response.json().get('results')
-        movie_newlist = sorted(movie_values, key=itemgetter('popularity'), reverse=True)
-        """ for result in results:
-            print(result.get('id')) """
-        
-        updated_movies_list = asyncio.run(main_get(movie_newlist))
+            """This section is making it easier for jinja to use.
+            Jsons the values, maps the results then sorts them by popularity so the most popular movie in the search is displayed first.
+            """
+            movie_values = search_response.json().get('results')
+            movie_newlist = sorted(movie_values, key=itemgetter('popularity'), reverse=True)
+            """ for result in results:
+                print(result.get('id')) """
 
-        
-        return render_template('movie_search.html', results=updated_movies_list)
+            updated_movies_list = asyncio.run(main_get(movie_newlist))
+            """Use session here so we don't keep making requests to the api"""
+            session['api_data'] = updated_movies_list
+            session.modified = True
+            """ print("********************")
+            print("we added session")
+            print(session['api_data'])
+            print("********************") """
+
+        return render_template('movie_search.html', results=session['api_data'])
 
     async def get_providers(session, movie):
+        """Async function so we can loop through each movie and call the providers api"""
         movie_id = movie['id']
         url = f"https://api.themoviedb.org/3/movie/{movie_id}/watch/providers"
 
@@ -262,6 +297,7 @@ def create_app(database_name, testing=False):
                 return movie
         
     async def main_get(movies):
+        """Main async function for calling the providers api"""
         async with aiohttp.ClientSession() as session:
             tasks = [get_providers(session, movie) for movie in movies]
             updated_movies = await asyncio.gather(*tasks)

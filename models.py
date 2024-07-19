@@ -39,43 +39,53 @@ class User(db.Model):
     )
 
     netflix = db.Column(
-        db.Boolean
+        db.Boolean,
+        default=False
     )
 
     prime_video = db.Column(
-        db.Boolean
+        db.Boolean,
+        default=False
     )
 
     disney_plus = db.Column(
-        db.Boolean
+        db.Boolean,
+        default=False
     )
 
     hbo_max = db.Column(
-        db.Boolean
+        db.Boolean,
+        default=False
     )
 
     hulu = db.Column(
-        db.Boolean
+        db.Boolean,
+        default=False
     )
 
     peacock = db.Column(
-        db.Boolean
+        db.Boolean,
+        default=False
     )
 
     paramount_plus = db.Column(
-        db.Boolean
+        db.Boolean,
+        default= False
     )
 
     starz = db.Column(
-        db.Boolean
+        db.Boolean,
+        default=False
     )
 
     showtime = db.Column(
-        db.Boolean
+        db.Boolean,
+        default=False
     )
 
     apple_tv = db.Column(
-        db.Boolean
+        db.Boolean,
+        default=False
     )
 
 
@@ -128,7 +138,12 @@ class Movie(db.Model):
 
     id = db.Column(
         db.Integer,
-        primary_key=True,
+        primary_key=True
+    )
+
+    movie_id = db.Column(
+        db.Integer,
+        unique=True
     )
 
     name = db.Column(
@@ -142,12 +157,6 @@ class Movie(db.Model):
         nullable=False
     )
 
-    rating = db.Column(
-        db.Text,
-        default="Rating goes here",
-        nullable=False
-    )
-
     image_url = db.Column(
         db.Text,
         default="Image URL",
@@ -156,14 +165,6 @@ class Movie(db.Model):
 
     year = db.Column(
         db.Integer
-    )
-
-    runtime = db.Column(
-        db.Integer
-    )
-
-    genre = db.Column(
-        db.Text
     )
 
 class Service(db.Model):
