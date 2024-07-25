@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
+<div class="container text-center" id="response"></div>
     <h1 class="text-white display-2 text-center mb-5">Results</h1>
     
     <div class="container">
@@ -32,9 +33,9 @@
                     </div>
                     {% if result.get('flatrate') != None %}
                     <div class="ms-2">
-                        <form method="POST" action="/search">
+                        <form method="POST" action="/movies/like">
                             <input type="hidden" name="add_watchlist" value="{{result}}">
-                            <button class="btn btn-success" ">Add to watchlist</button>
+                            <button class="btn btn-success">Add to watchlist</button>
                         </form>
                     </div>
                     {% endif %}
@@ -44,15 +45,26 @@
         </div>
     </div>   
     
-    <div style="display: none;">
+    <!-- <div style="display: none;">
         <input type="hidden" name="search_results" value="{{results}}" id="hidden_element">
-    </div>
+    </div> -->
     
     <script type="text/javascript">
         $(function() {
-            $('form').submit(function() {
-                $("#hidden_element").clone().appendTo(this);
+            $('form').submit(function(event) {
+                event.preventDefault();
+                /* $("#hidden_element").clone().appendTo(this); */
+                const formData = new FormData(this);
+
+                fetch('/movies/like', {
+                    method: 'POST',
+                    body: formData,
+                }).then(response => response.json())
+                .then(data => {
+                    $('#response').html(`<p class="text-white">${data.message}</p>`);
+                })
+                .catch(error => console.error('Error:', error));
+                })
             });
-        });
     </script>
 {% endblock %}

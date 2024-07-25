@@ -164,7 +164,7 @@ class Movie(db.Model):
     )
 
     year = db.Column(
-        db.Integer
+        db.Text
     )
 
 class Service(db.Model):
@@ -178,6 +178,11 @@ class Service(db.Model):
     )
 
     name = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    image_url = db.Column(
         db.Text,
         nullable=False
     )

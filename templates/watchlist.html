@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container text-center" id="response"></div>
+    <h1 class="text-white display-2 text-center mb-5">Your Watchlist</h1>
+    
+    <div class="container">
+        <div class="row row-cols-1">
+            {% for movie in movie_dict %}
+                {% for key, value in movie.items() %}
+                <div class="container">
+                    <div class="clearfix">
+                        <img src="https://image.tmdb.org/t/p/original{{value[0].image_url}}" class="flex space-x-4 h-60 me-3 mb-3 mt-3 float-md-start">
+                        <p class="text-white text-center">{{value[0].name}}</p>
+
+                        <div class="progress" role="progressbar" aria-label="Basic example" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+                            <div class="progress-bar bg-secondary" style="width: 100%"></div>
+                        </div>
+                        <div class="container mt-3">
+                            <div class="row">
+                                {% if value[1] != None %}
+                                    {% for provider in value[1] %}
+                                    <div class="col-1">
+                                        <div class="col d-flex space-x-4 h-12 me-3 mb-1">
+                                            <img src="https://image.tmdb.org/t/p/original{{provider}}">                                            
+                                        </div>
+                                        <p class="text-white text-xs">Subs HD</p>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <p class="text-white">Currently no providers streaming</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ms-2">
+                        <form method="POST" action="/movies/{{value[0].id}}/remove_watchlist">
+                            <button class="btn btn-success">Remove from watchlist</button>
+                        </form>
+                    </div>
+                </div>
+                <br>
+                {% endfor %}
+            {% endfor %}
+        </div>
+    </div>   
+{% endblock %}

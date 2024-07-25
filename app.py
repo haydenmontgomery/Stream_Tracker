@@ -6,7 +6,7 @@ import asyncio
 import json
 import ast
 from operator import itemgetter
-from flask import Flask, render_template, request, flash, redirect, session, g
+from flask import Flask, render_template, request, flash, redirect, session, g, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
@@ -20,7 +20,7 @@ HEADERS = {
                 "accept": "application/json",
                 "Authorization": os.environ.get('TMDB_API_KEY')
             }
-SUBSCRIPTIONS = ['Amazon Prime Video', 'Netflix', 'Disney Plus', 'HBO Max', 'Hulu', 'Peacock', 'Paramount Plus', 'Starz', 'Showtime', 'Apple TV']
+SUBSCRIPTIONS = ['Amazon Prime Video', 'Netflix', 'Disney Plus', 'HBO Max', 'Hulu', 'Peacock', 'Paramount Plus', 'Starz', 'Showtime', 'Apple TV Plus']
 
 def create_app(database_name, testing=False):
 
@@ -220,58 +220,86 @@ def create_app(database_name, testing=False):
     def search_movies():
         """Search page. Takes arguments from searchbar, uses omdb api to get movies from search term."""
 
-        if not g.user:
+        """ if not g.user:
             flash("Access unauthorized.", "danger")
             return redirect("/")
         
         if request.method == 'POST':
-            """This is called when a user clicks to add a movie to watchlist"""
-
+            # This is called when a user clicks to add a movie to watchlist
+            print('************************************')
+            print('We are at the beginning')
+            print('************************************')
             session['api_data'] = request.form.get('search_results') # gets the entire search results so we don't have to call api again.
             dict_session = ast.literal_eval(session['api_data']) # converts to dictionary
             movie_info_str = request.form.get('add_watchlist') # gets the selected movie
             if movie_info_str:
+                print('************************************')
+                print('We are at movie_info_str')
+                print('************************************')
                 try:
+                    print('************************************')
+                    print('We are at the try')
+                    print('************************************')
                     dict_obj = ast.literal_eval(movie_info_str) # converts to dictionary
                     movie = Movie.query.get_or_404(int(dict_obj.get('id')))
                     if not movie:
+                        print('************************************')
+                        print('We are at the if not movie')
+                        print('************************************')
                         movie = Movie(movie_id=int(dict_obj.get('id')), name=dict_obj.get('title'), description=dict_obj.get('overview'), image=dict_obj.get('poster_path'), year=dict_obj.get('release_date'))
                         db.session.add(movie)
                         db.session.commit()
                     likes = User_Likes_Movie(user_liking_id=g.user.id, like_movie_id=movie.id)
                     db.session.add(likes)
-                    flash(f"Added to watchlist {dict_obj.get('title')}", "success")
-                    return render_template('movie_search.html', results=dict_session)
+                    db.session.commit()
+                    services = []
+                    flatrate = dict_obj.get('flatrate')
+                    for service in flatrate:
+                        if service.get('provider_name') in SUBSCRIPTIONS:
+                            services.append(service.get('provider_name'))
+
+                    for service in services:
+                        db_service = Service.query.filter_by(name=service).first()
+                        subscription = Subscription(movie_id=movie.id, service_id=db_service.id)
+                        db.session.add(subscription)
+                        db.session.commit()
+                    #db.session.commit()
+                    #flash(f"Added to watchlist {dict_obj.get('title')}", "success")
+                    title = dict_obj.get('title')
+                    results = {'message': f'Added {title} to watchlist!'}
+                    print('************************************')
+                    print('We are at about to jsonify the results')
+                    print('************************************')
+                    return jsonify(results)
                 except ValueError as e:
-                    print("Error converting string to dictionary", e)
+                    print("Error converting string to dictionary", e) """
            
 
-        if 'api_data' not in session or session['api_data'] == []:
-            """Make sure we query only if nothing is in our session just to be sure"""
-            search = request.args.get('q')
+        """Make sure we query only if nothing is in our session just to be sure"""
+        search = request.args.get('q')
 
-            """             if not search:
-                return redirect('/')
-            else: """
-            url = f"https://api.themoviedb.org/3/search/movie?query={search}&include_adult=false&language=en-US&page=1"
-            search_response = requests.get(url, headers=HEADERS)
+        """             if not search:
+            return redirect('/')
+        else: """
+        url = f"https://api.themoviedb.org/3/search/movie?query={search}&include_adult=false&language=en-US&page=1"
+        search_response = requests.get(url, headers=HEADERS)
 
-            """This section is making it easier for jinja to use.
-            Jsons the values, maps the results then sorts them by popularity so the most popular movie in the search is displayed first.
-            """
-            movie_values = search_response.json().get('results')
-            movie_newlist = sorted(movie_values, key=itemgetter('popularity'), reverse=True)
-            """ for result in results:
-                print(result.get('id')) """
+        """This section is making it easier for jinja to use.
+        Jsons the values, maps the results then sorts them by popularity so the most popular movie in the search is displayed first.
+        """
+        movie_values = search_response.json().get('results')
+        movie_newlist = sorted(movie_values, key=itemgetter('popularity'), reverse=True)
+        """ for result in results:
+            print(result.get('id')) """
 
-            updated_movies_list = asyncio.run(main_get(movie_newlist))
-            """Use session here so we don't keep making requests to the api"""
-            session['api_data'] = updated_movies_list
-            session.modified = True
-            """ print("********************")
-            print("we added session")
-            print(session['api_data'])
-            print("********************") """
+        updated_movies_list = asyncio.run(main_get(movie_newlist))
+        """Use session here so we don't keep making requests to the api"""
+        session['api_data'] = updated_movies_list
+        session.modified = True
+        """ print("********************")
+        print("we added session")
+        print(session['api_data'])
+        print("********************") """
 
         return render_template('movie_search.html', results=session['api_data'])
 
@@ -302,6 +330,101 @@ def create_app(database_name, testing=False):
             tasks = [get_providers(session, movie) for movie in movies]
             updated_movies = await asyncio.gather(*tasks)
             return updated_movies
+    
+    @app.route('/movies/like', methods=['POST'])
+    def watchlist_button():
+        if not g.user:
+            flash("Access unauthorized.", "danger")
+            return redirect("/")
+        
+
+        # This is called when a user clicks to add a movie to watchlist
+        print('************************************')
+        print('We are at the beginning')
+        print('************************************')
+        #session['api_data'] = request.form.get('search_results') # gets the entire search results so we don't have to call api again.
+        #dict_session = ast.literal_eval(session['api_data']) # converts to dictionary
+        movie_info_str = request.form.get('add_watchlist') # gets the selected movie
+        if movie_info_str:
+            try:
+                dict_obj = ast.literal_eval(movie_info_str) # converts to dictionary
+                new_id = int(dict_obj.get('id'))
+                movie = Movie.query.filter_by(movie_id=new_id).first()
+                if not movie:
+                    movie = Movie(movie_id=int(dict_obj.get('id')), name=dict_obj.get('title'), description=dict_obj.get('overview'), image_url=dict_obj.get('poster_path'), year=dict_obj.get('release_date'))
+                    db.session.add(movie)
+                    db.session.commit()
+                likes = User_Likes_Movie.query.filter_by(user_liking_id=g.user.id, liked_movie_id=movie.id).first()
+                if not likes:
+                    print('************************************')
+                    print('We are at the if not likes')
+                    print('************************************')
+                    likes = User_Likes_Movie(user_liking_id=g.user.id, liked_movie_id=movie.id)
+                    db.session.add(likes)
+                    db.session.commit()
+                services = []
+                flatrate = dict_obj.get('flatrate')
+
+                for service in flatrate:
+                    if service.get('provider_name') in SUBSCRIPTIONS:
+                        services.append(service.get('provider_name'))
+
+                for service in services:
+                    db_service = Service.query.filter_by(name=service).first()
+                    subscription = Subscription.query.filter_by(movie_id=movie.id, service_id=db_service.id).first()
+                    if not subscription:
+                        subscription = Subscription(movie_id=movie.id, service_id=db_service.id)
+                        db.session.add(subscription)
+                        db.session.commit()
+                #db.session.commit()
+                title = dict_obj.get('title')
+                results = {'message': f'Added {title} to watchlist!'}
+                print('************************************')
+                print('We are at about to jsonify the results')
+                print('************************************')
+            except ValueError as e:
+                print("Error converting string to dictionary", e)
+        #flash(f"Added {title} to watchlist!", "success")
+        return jsonify(results)
+    
+    @app.route('/watchlist')
+    def watchlist():
+        """Displays user's list of movies to watch"""
+        if not g.user:
+            flash("Access unauthorized.", "danger")
+            return redirect("/")
+        
+        user_likes = User_Likes_Movie.query.filter_by(user_liking_id=g.user.id).all()
+        movie_dict = []
+
+        for like in user_likes:
+            movie = Movie.query.get(like.liked_movie_id)
+            subscription_list = []
+            subscription_query = Subscription.query.filter_by(movie_id=movie.id).all()
+            for subscription in subscription_query:
+                service = Service.query.get(subscription.service_id)
+                subscription_list.append(service.image_url)
+            dict_subscriptions = {movie.id: [movie, subscription_list]}
+            movie_dict.append(dict_subscriptions)
+
+        return render_template('watchlist.html', movie_dict=movie_dict)
+
+    @app.route('/movies/<int:id>/remove_watchlist', methods=['POST'])
+    def remove_watchlist(id):
+        """Removes the movie from the user's watchlist"""
+        if not g.user:
+            flash("Access unauthorized.", "danger")
+            return redirect("/")
+        likes = User_Likes_Movie.query.filter_by(user_liking_id=g.user.id, liked_movie_id=id).first()
+        if likes.user_liking_id != g.user.id:
+            flash("Access unauthorized.", "danger")
+            return redirect("/")
+
+        db.session.delete(likes)
+        db.session.commit()
+        flash("Removed from watchlist", "info")
+        return redirect(request.referrer)
+
     ##############################################################################
     # Homepage and error pages
 
