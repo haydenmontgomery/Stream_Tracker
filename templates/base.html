@@ -7,6 +7,7 @@
 
   <link rel="stylesheet"
         href="https://unpkg.com/bootstrap/dist/css/bootstrap.css">
+  <link rel="stylesheet" href="/static/stylesheets/style.css">
   <script src="https://unpkg.com/bootstrap"></script>
   <script src="https://unpkg.com/jquery"></script>
 <!--   <link rel="stylesheet"
@@ -20,6 +21,7 @@
   <link rel="stylesheet" href="/static/stylesheets/output.css">
 </head>
 <body class="{% block body_class %}{% endblock %} min-h-screen bg-zinc-800">
+  <article>
 <!-- <nav class="bg-red-800">
   <div class="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
     <div class="relative flex h-16 items-center justify-between">
@@ -56,7 +58,7 @@
   {% for category, message in get_flashed_messages(with_categories=True) %}
   <div class="alert alert-{{ category }}">{{ message }}</div>
   {% endfor %} -->
-  <nav class="bg-red-900">
+  <nav class="bg-red-900 shadow-lg">
     <div class="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
       <div class="relative flex h-16 items-center justify-between">
         
@@ -75,18 +77,18 @@
             <div class="flex space-x-4 h-12">
               {% if request.endpoint != None %}
               
-              <form class="rounded-md px-3 py-2 test-sm" action="/search">
+              <form class="rounded-md px-3 py-2 test-sm shadow-md input-group" action="/search">
                 <input name="q" class="form-control" placeholder="Search a movie" id="search">
-                <button class="btn btn-default">
-                  <span class=""></span>
-                </button>
+                <!-- <button class="btn btn-default"> -->
+                  <span class="input-group-text">&#x1F50D;</span>
+                <!-- </button> -->
               </form>
             
             {% endif %}
-              <a href="/users/profile">
-                <button type="button" class="">
+              <a href="/users/profile" class="">
+                <!-- <button type="button" class=""> -->
                   <img src="{{g.user.image_url}}" class="flex space-x-4 h-12">
-                </button>
+                <!-- </button> -->
               </a>
               <a href="/logout" class="rounded-md bg-indigo-950 px-3 py-3 text-sm/3 font-medium text-white hover:bg-slate-700">Logout</a>
             </div>
@@ -114,6 +116,7 @@
       </div>
     </div> -->
   </nav>
+  <main>
   <div class="container">
     {% for category, message in get_flashed_messages(with_categories=True) %}
     <div class="alert alert-{{ category }}">{{ message }}</div>
@@ -123,10 +126,16 @@
     {% endblock %}
   
   </div>
-  <footer class="bg-body-tertiary text-center text-lg-start site-footer">
+  <br>
+  <br>
+  <br>
+  <br>
+  </main>
+  <footer class="bg-body-tertiary text-center text-lg-start site-footer" style="position: fixed; left: 0; bottom: 0; width: 100%;">
     <div class="text-center p-3 bg-red-900">
       <p class="ounded-md bg-indigo-950 px-3 py-3 text-sm/3 font-medium text-white">Streaming availabilty thanks to JustWatch</p>
     </div>
   </footer>
+  </article>
 </body>
 </html>
