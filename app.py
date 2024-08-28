@@ -15,7 +15,6 @@ from models import db, connect_db, User, Movie, Subscription, User_Likes_Movie, 
 
 
 CURR_USER_KEY = "curr_user"
-OMDB_URL = "https://omdb-api4.p.rapidapi.com/"
 HEADERS = {
                 "accept": "application/json",
                 "Authorization": os.environ.get('TMDB_API_KEY')
@@ -141,19 +140,6 @@ def create_app(database_name, testing=False):
     ##############################################################################
     # General user routes:
 
-    """     @app.route('/users/follow/<int:follow_id>', methods=['POST'])
-    def add_follow(follow_id):
-        #Add a follow for the currently-logged-in user.
-
-        if not g.user:
-            flash("Access unauthorized.", "danger")
-            return redirect("/")
-
-        followed_user = User.query.get_or_404(follow_id)
-        g.user.following.append(followed_user)
-        db.session.commit()
-
-        return redirect(f"/users/{g.user.id}/following") """
 
     @app.route('/users/profile', methods=["GET", "POST"])
     def profile():
@@ -194,9 +180,6 @@ def create_app(database_name, testing=False):
             return redirect('/')
         return render_template('users/edit.html', form=form)
 
-
-
-
     @app.route('/users/delete', methods=["POST"])
     def delete_user():
         """Delete user."""
@@ -219,68 +202,11 @@ def create_app(database_name, testing=False):
     @app.route('/search', methods=['GET', 'POST'])
     def search_movies():
         """Search page. Takes arguments from searchbar, uses omdb api to get movies from search term."""
-
-        """ if not g.user:
-            flash("Access unauthorized.", "danger")
-            return redirect("/")
-        
-        if request.method == 'POST':
-            # This is called when a user clicks to add a movie to watchlist
-            print('************************************')
-            print('We are at the beginning')
-            print('************************************')
-            session['api_data'] = request.form.get('search_results') # gets the entire search results so we don't have to call api again.
-            dict_session = ast.literal_eval(session['api_data']) # converts to dictionary
-            movie_info_str = request.form.get('add_watchlist') # gets the selected movie
-            if movie_info_str:
-                print('************************************')
-                print('We are at movie_info_str')
-                print('************************************')
-                try:
-                    print('************************************')
-                    print('We are at the try')
-                    print('************************************')
-                    dict_obj = ast.literal_eval(movie_info_str) # converts to dictionary
-                    movie = Movie.query.get_or_404(int(dict_obj.get('id')))
-                    if not movie:
-                        print('************************************')
-                        print('We are at the if not movie')
-                        print('************************************')
-                        movie = Movie(movie_id=int(dict_obj.get('id')), name=dict_obj.get('title'), description=dict_obj.get('overview'), image=dict_obj.get('poster_path'), year=dict_obj.get('release_date'))
-                        db.session.add(movie)
-                        db.session.commit()
-                    likes = User_Likes_Movie(user_liking_id=g.user.id, like_movie_id=movie.id)
-                    db.session.add(likes)
-                    db.session.commit()
-                    services = []
-                    flatrate = dict_obj.get('flatrate')
-                    for service in flatrate:
-                        if service.get('provider_name') in SUBSCRIPTIONS:
-                            services.append(service.get('provider_name'))
-
-                    for service in services:
-                        db_service = Service.query.filter_by(name=service).first()
-                        subscription = Subscription(movie_id=movie.id, service_id=db_service.id)
-                        db.session.add(subscription)
-                        db.session.commit()
-                    #db.session.commit()
-                    #flash(f"Added to watchlist {dict_obj.get('title')}", "success")
-                    title = dict_obj.get('title')
-                    results = {'message': f'Added {title} to watchlist!'}
-                    print('************************************')
-                    print('We are at about to jsonify the results')
-                    print('************************************')
-                    return jsonify(results)
-                except ValueError as e:
-                    print("Error converting string to dictionary", e) """
            
 
         """Make sure we query only if nothing is in our session just to be sure"""
         search = request.args.get('q')
 
-        """             if not search:
-            return redirect('/')
-        else: """
         url = f"https://api.themoviedb.org/3/search/movie?query={search}&include_adult=false&language=en-US&page=1"
         search_response = requests.get(url, headers=HEADERS)
 
@@ -296,10 +222,6 @@ def create_app(database_name, testing=False):
         """Use session here so we don't keep making requests to the api"""
         session['api_data'] = updated_movies_list
         session.modified = True
-        """ print("********************")
-        print("we added session")
-        print(session['api_data'])
-        print("********************") """
 
         return render_template('movie_search.html', results=session['api_data'])
 
@@ -339,11 +261,6 @@ def create_app(database_name, testing=False):
         
 
         # This is called when a user clicks to add a movie to watchlist
-        print('************************************')
-        print('We are at the beginning')
-        print('************************************')
-        #session['api_data'] = request.form.get('search_results') # gets the entire search results so we don't have to call api again.
-        #dict_session = ast.literal_eval(session['api_data']) # converts to dictionary
         movie_info_str = request.form.get('add_watchlist') # gets the selected movie
         if movie_info_str:
             try:
@@ -356,9 +273,6 @@ def create_app(database_name, testing=False):
                     db.session.commit()
                 likes = User_Likes_Movie.query.filter_by(user_liking_id=g.user.id, liked_movie_id=movie.id).first()
                 if not likes:
-                    print('************************************')
-                    print('We are at the if not likes')
-                    print('************************************')
                     likes = User_Likes_Movie(user_liking_id=g.user.id, liked_movie_id=movie.id)
                     db.session.add(likes)
                     db.session.commit()
@@ -376,15 +290,10 @@ def create_app(database_name, testing=False):
                         subscription = Subscription(movie_id=movie.id, service_id=db_service.id)
                         db.session.add(subscription)
                         db.session.commit()
-                #db.session.commit()
                 title = dict_obj.get('title')
                 results = {'message': f'Added {title} to watchlist!'}
-                print('************************************')
-                print('We are at about to jsonify the results')
-                print('************************************')
             except ValueError as e:
                 print("Error converting string to dictionary", e)
-        #flash(f"Added {title} to watchlist!", "success")
         return jsonify(results)
     
     @app.route('/watchlist')

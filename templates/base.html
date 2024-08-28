@@ -10,54 +10,12 @@
   <link rel="stylesheet" href="/static/stylesheets/style.css">
   <script src="https://unpkg.com/bootstrap"></script>
   <script src="https://unpkg.com/jquery"></script>
-<!--   <link rel="stylesheet"
-        href="https://unpkg.com/bootstrap/dist/css/bootstrap.css">
-  <script src="https://unpkg.com/jquery"></script>
-  <script src="https://unpkg.com/popper"></script>
-  <script src="https://unpkg.com/bootstrap"></script>
 
-  <link rel="stylesheet"
-        href="https://use.fontawesome.com/releases/v5.3.1/css/all.css"> -->
   <link rel="stylesheet" href="/static/stylesheets/output.css">
 </head>
 <body class="{% block body_class %}{% endblock %} min-h-screen bg-zinc-800">
   <article>
-<!-- <nav class="bg-red-800">
-  <div class="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
-    <div class="relative flex h-16 items-center justify-between">
-    <div class="absolute inset-y-0 left-0 flex items-center sm:hidden">
-    <ul>
-      {% if request.endpoint != None %}
-      <li>
-        <form class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4" action="/users">
-          <input name="q" class="form-control" placeholder="Search a movie" id="search">
-          <button class="btn btn-default">
-            <span class="fa fa-search"></span>
-          </button>
-        </form>
-      </li>
-      {% endif %}
-      {% if not g.user %}
-      <li><a href="/signup">Sign up</a></li>
-      <li><a href="/login">Log in</a></li>
-      {% else %}
-      <li>
-        <a href="/users/{{ g.user.id }}">
-          <img src="{{ g.user.image_url }}" alt="{{ g.user.username }}">
-        </a>
-      </li>
-      <li><a href="/messages/new">New Message</a></li>
-      <li><a href="/logout">Log out</a></li>
-      {% endif %}
-    </ul>
-    </div> 
-    </div>
-  </div>
-</nav>
-<div class="container">
-  {% for category, message in get_flashed_messages(with_categories=True) %}
-  <div class="alert alert-{{ category }}">{{ message }}</div>
-  {% endfor %} -->
+
   <nav class="bg-red-900 shadow-lg">
     <div class="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
       <div class="relative flex h-16 items-center justify-between">
@@ -105,16 +63,6 @@
     </div>
     </div>
   
-    <!-- Mobile menu, show/hide based on menu state.
-    <div class="sm:hidden" id="mobile-menu">
-      <div class="space-y-1 px-2 pb-3 pt-2">
-        Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white"
-        <a href="#" class="block rounded-md bg-gray-900 px-3 py-2 text-base font-medium text-white" aria-current="page">Dashboard</a>
-        <a href="#" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Team</a>
-        <a href="#" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Projects</a>
-        <a href="#" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Calendar</a>
-      </div>
-    </div> -->
   </nav>
   <main>
   <div class="container">
