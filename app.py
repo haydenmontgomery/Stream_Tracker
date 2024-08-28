@@ -312,11 +312,38 @@ def create_app(database_name, testing=False):
             subscription_query = Subscription.query.filter_by(movie_id=movie.id).all()
             for subscription in subscription_query:
                 service = Service.query.get(subscription.service_id)
-                subscription_list.append(service.image_url)
+                if user_subscription_switch_case(service):
+                    subscription_list.append(service.image_url)
             dict_subscriptions = {movie.id: [movie, subscription_list]}
             movie_dict.append(dict_subscriptions)
 
         return render_template('watchlist.html', movie_dict=movie_dict)
+
+    def user_subscription_switch_case(service):
+        if g.user.netflix and service.id == 1:
+            return True
+        elif g.user.prime_video and service.id == 2:
+            return True
+        elif g.user.disney_plus and service.id == 3:
+            return True
+        elif g.user.hbo_max and service.id == 4:
+            return True
+        elif g.user.hulu and service.id == 5:
+            return True
+        elif g.user.peacock and service.id == 6:
+            return True
+        elif g.user.paramount_plus and service.id == 7:
+            return True
+        elif g.user.starz and service.id == 8:
+            return True
+        elif g.user.showtime and service.id == 9:
+            return True
+        elif g.user.apple_tv  and service.id == 9:
+            return True
+        else:
+            return False
+
+
 
     @app.route('/movies/<int:id>/remove_watchlist', methods=['POST'])
     def remove_watchlist(id):
