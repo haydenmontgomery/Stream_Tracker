@@ -37,8 +37,8 @@ def create_app(database_name, testing=False):
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', "it's a secret")
     toolbar = DebugToolbarExtension(app)
 
-    app.app_context().push()
-    connect_db(app)
+    """ app.app_context().push()
+    connect_db(app) """
 
 
     ##############################################################################
